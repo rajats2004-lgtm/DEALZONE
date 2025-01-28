@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tech Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        @media (max-width: 640px) {
+            .mobile-cart {
+                width: 100% !important;
+            }
+        }
+        
+        /* Updated loading spinner styles */
+        .loading-spinner {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+        }
+        
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            border: 2px solid #eee;
+            border-top-color: #22c55e;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        img.loading {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        img.loaded {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        img.loaded + .loading-spinner {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        img.error {
+            opacity: 0.7;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+        
+        /* Add subtle shimmer effect while loading */
+        .loading-shimmer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        /* Add to existing styles */
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .transition-transform {
+            transition: transform 0.2s ease-in-out;
+        }
+    </style>
+    <style>
+        #splashScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        #splashScreen.fade-out {
+            opacity: 0;
+        }
+        
+        #splashScreen img {
+            width: 250px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        
+        #splashScreen h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        #splashScreen p {
+            color: #888;
+            font-size: 1.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Splash Screen -->
+    <div id="splashScreen">
+        <img src="images/logo.png" alt="DealZone Tech Logo">
+        <h1>DEALZONE TECH</h1>
+        <p>THE TECH YOU TRUST</p>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="images/logo.jpg" alt="DealZone Tech Logo" class="h-16 sm:h-20 w-auto">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-gray-800">DEALZONE TECH</h1>
+                        <p class="text-xs sm:text-sm text-gray-600">THE TECH YOU TRUST</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <i class="fas fa-heart text-lg sm:text-xl cursor-pointer text-gray-600 hover:text-gray-800" id="wishlistIcon"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center wishlist-count">0</span>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-bell text-lg sm:text-xl cursor-pointer text-gray-600 hover:text-gray-800"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center">2</span>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-shopping-cart text-lg sm:text-xl cursor-pointer text-gray-600 hover:text-gray-800" id="cartIcon"></i>
+                        <span class="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-4 h-4 text-xs flex items-center justify-center cart-count">0</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Search Bar -->
+            <div class="mt-4 mb-2">
+                <div class="relative">
+                    <input type="text" 
+                           placeholder="Search products..." 
+                           class="w-full p-2 sm:p-3 pl-10 pr-4 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
+                           style="padding-left: 2.5rem;">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mt-36 sm:mt-40 mb-20">
+        <!-- Banner -->
+        <div class="container mx-auto px-4">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-4 sm:p-6 text-white flex justify-between items-center shadow-lg">
+                <div class="space-y-1 sm:space-y-2">
+                    <span class="bg-white/20 px-2 py-1 rounded-full text-xs sm:text-sm">New Launch</span>
+                    <h2 class="text-xl sm:text-3xl font-bold">iPhone 16 Pro Max</h2>
+                    <p class="text-white/80 text-sm sm:text-base">Starting from ₹1,69,900</p>
+                    <button onclick="addToCart(products[0])" 
+                            class="mt-2 sm:mt-4 bg-white text-blue-600 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-sm sm:text-base font-semibold hover:bg-gray-100 transition-all">
+                        Shop Now
+                    </button>
+                </div>
+                <div class="relative">
+                    <img src="https://fdn2.gsmarena.com/vv/pics/apple/apple-iphone-15-pro-max-1.jpg" 
+                         alt="iPhone 16 Pro Max" 
+                         class="h-24 sm:h-32 w-24 sm:w-32 object-cover rounded-lg"
+                         onerror="handleImageError(this)"
+                         data-backup-image="https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-15-pro-max-natural-titanium-select?wid=940&hei=1112&fmt=png-alpha">
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="container mx-auto px-4 mt-6 sm:mt-8">
+            <div class="flex space-x-3 sm:space-x-4 overflow-x-auto py-2 scrollbar-hide">
+                <button class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-blue-500 text-white text-sm sm:text-base font-medium shadow-md hover:bg-blue-600 transition-all whitespace-nowrap">All</button>
+                <button class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-white text-sm sm:text-base font-medium shadow-md hover:bg-gray-50 transition-all whitespace-nowrap">Smart Phones</button>
+                <button class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-white text-sm sm:text-base font-medium shadow-md hover:bg-gray-50 transition-all whitespace-nowrap">Laptops</button>
+                <button class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-white text-sm sm:text-base font-medium shadow-md hover:bg-gray-50 transition-all whitespace-nowrap">Speakers</button>
+                <button class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-white text-sm sm:text-base font-medium shadow-md hover:bg-gray-50 transition-all whitespace-nowrap">Headphones</button>
+                <button class="px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-white text-sm sm:text-base font-medium shadow-md hover:bg-gray-50 transition-all whitespace-nowrap">Game Consoles</button>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="container mx-auto px-4 mt-6 sm:mt-8">
+            <div id="productGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                <!-- Products will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Cart Sidebar -->
+    <div id="cartSidebar" class="fixed top-0 right-0 h-full w-full sm:w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50 mobile-cart overflow-y-auto">
+        <div class="p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg sm:text-xl font-bold">Shopping Cart</h2>
+                <button id="closeCart" class="text-gray-500 hover:text-gray-700 p-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="cartItems" class="space-y-4">
+                <!-- Cart items will be inserted here -->
+            </div>
+            <div class="border-t mt-4 pt-4">
+                <div class="space-y-2 py-4">
+                    <!-- Cart summary will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wishlist Sidebar -->
+    <div id="wishlistSidebar" class="fixed top-0 right-0 h-full w-full sm:w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 z-50 mobile-cart overflow-y-auto">
+        <div class="p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg sm:text-xl font-bold">Wishlist</h2>
+                <div class="flex items-center space-x-2">
+                    <button id="clearWishlist" 
+                            class="text-red-500 hover:text-red-600 p-2 text-sm flex items-center"
+                            title="Clear Wishlist">
+                        <i class="fas fa-trash-alt mr-1"></i>
+                        Clear
+                    </button>
+                    <button id="closeWishlist" class="text-gray-500 hover:text-gray-700 p-2">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="wishlistItems" class="space-y-4">
+                <!-- Wishlist items will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg z-50">
+        <div class="flex justify-around py-2 sm:py-3">
+            <a href="#" class="flex flex-col items-center text-blue-500 px-2">
+                <i class="fas fa-home text-lg sm:text-xl"></i>
+                <span class="text-xs mt-1">Home</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-blue-500 px-2">
+                <i class="fas fa-search text-lg sm:text-xl"></i>
+                <span class="text-xs mt-1">Search</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-blue-500 px-2" id="cartNav">
+                <i class="fas fa-shopping-cart text-lg sm:text-xl"></i>
+                <span class="text-xs mt-1">Cart</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-blue-500 px-2" id="profileNav">
+                <i class="fas fa-user text-lg sm:text-xl"></i>
+                <span class="text-xs mt-1">Profile</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-white rounded-lg max-w-md mx-auto mt-20 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Profile</h2>
+                <button id="closeProfile" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="tabs flex space-x-4 mb-6">
+                <button class="tab-btn active px-4 py-2 rounded-lg bg-blue-500 text-white" data-tab="login">Login</button>
+                <button class="tab-btn px-4 py-2 rounded-lg" data-tab="register">Register</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="loginForm" class="tab-content">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Email</label>
+                        <input type="email" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Password</label>
+                        <input type="password" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-all">
+                        Login
+                    </button>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="tab-content hidden">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Full Name</label>
+                        <input type="text" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Email</label>
+                        <input type="email" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Password</label>
+                        <input type="password" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-all">
+                        Register
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-4 text-center">
+                <button type="button" onclick="document.querySelector('#loginForm').style.display='block'; document.querySelector('#registerForm').style.display='none';" 
+                        class="text-blue-500 hover:text-blue-600">
+                    Already have an account? Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Details Modal -->
+    <div id="deliveryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-white rounded-lg max-w-md mx-auto mt-20 p-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">Delivery Details</h2>
+                <button id="closeDelivery" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="deliveryForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">Full Name</label>
+                    <input type="text" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Street Address</label>
+                    <input type="text" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">City</label>
+                        <input type="text" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Postal Code</label>
+                        <input type="text" class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-700 mb-2">Delivery Instructions (Optional)</label>
+                    <textarea class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:border-blue-500" rows="3"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-all">
+                    Confirm Delivery Details
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const splashScreen = document.getElementById('splashScreen');
+            const mainContent = document.querySelector('body');
+            
+            // Hide splash screen after 3 seconds
+            setTimeout(() => {
+                splashScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                    mainContent.style.overflow = 'auto'; // Enable scrolling
+                }, 500);
+            }, 3000);
+        });
+    </script>
+</body>
+</html> 
